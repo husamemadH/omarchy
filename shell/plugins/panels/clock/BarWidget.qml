@@ -28,6 +28,10 @@ BarWidget {
   // What the bar shows is what shell.json stores, so a cycled format is the
   // format from then on rather than something that reverts on restart.
   readonly property string activeFormat: configuredFormat
+
+  // A seconds label needs the clock to tick sixty times as often, and a
+  // repaint a second is a price only the formats that print seconds pay.
+  readonly property bool showsSeconds: Model.clockNeedsSeconds(activeFormat)
   readonly property string displayText: formatted(displayDate)
   readonly property var verticalLines: displayText.split("\n")
 
@@ -73,6 +77,10 @@ BarWidget {
     if (panelLoader.item) panelLoader.item.toggle()
   }
 
+  function toggleWeekStart() {
+    if (panelLoader.item) panelLoader.item.toggleWeekStart()
+  }
+
   // The clock fills more slot than it paints a mark for, at both
   // orientations: horizontally it is a text label in a padded slot, so the
   // dot takes the label width; vertically it is a stack of icon-sized lines,
@@ -107,7 +115,7 @@ BarWidget {
 
   SystemClock {
     id: clock
-    precision: SystemClock.Minutes
+    precision: root.showsSeconds ? SystemClock.Seconds : SystemClock.Minutes
     onDateChanged: root.displayDate = date
   }
 
@@ -122,11 +130,12 @@ BarWidget {
     }
   }
 
-  IpcHandler {
+  ShellIpc {
     target: "omarchy.clock"
 
     function refresh(): void { root.broadcast("refresh") }
     function cycleFormat(): void { root.cycleFormat() }
+    function toggleWeekStart(): void { root.toggleWeekStart() }
     function open(): void { root.open() }
     function close(): void { root.close() }
     function show(): void { root.open() }
@@ -144,6 +153,7 @@ BarWidget {
     fixedHeight: root.vertical ? root.verticalLines.length * Style.bar.iconSlot : -1
     horizontalMargin: 8.75
     verticalPadding: 8.75
+    tooltipText: "Right-click to toggle format"
 
     onPressed: function(b) {
       if (b === Qt.RightButton) root.cycleFormat()
