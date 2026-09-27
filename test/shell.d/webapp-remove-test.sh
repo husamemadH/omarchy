@@ -42,3 +42,9 @@ pass "web app removal deletes the launcher entry"
 
 grep -Fxq 'hyprctl:reload' "$TEST_LOG" || fail "web app removal reloads Hyprland so its binding goes away" "$(cat "$TEST_LOG")"
 pass "web app removal reloads Hyprland so its binding goes away"
+
+: >"$TEST_LOG"
+touch "$tmp_dir/home/.local/share/applications/YouTube.desktop"
+HOME="$tmp_dir/home" OMARCHY_UPGRADE_TO_QUATTRO_LIVE=1 "$ROOT/bin/omarchy-webapp-remove" YouTube
+! grep -Fq 'hyprctl:reload' "$TEST_LOG" || fail "web app removal does not reload Hyprland during the live quattro upgrade"
+pass "web app removal does not reload Hyprland during the live quattro upgrade"
